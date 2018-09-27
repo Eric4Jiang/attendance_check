@@ -7,16 +7,26 @@ import numpy as np
 import PIL
 from PIL import Image
 
-if len(sys.argv) != 3:
+# My paths
+# /Users/eric/Dropbox/AttendanceCheck/DataSet/
+# /Users/eric/opencv/data/haarcascades/haarcascade_frontalface_default.xml
+
+if len(sys.argv) == 2:
+    if sys.argv[1] == "home":
+        print ("Using default paths...")
+        datasetPath = "/Users/eric/Dropbox/AttendanceCheck/DataSet/"
+        haarcascadesPath = "/Users/eric/opencv/data/haarcascades/haarcascade_frontalface_default.xml"
+elif len(sys.argv) != 3:
     print ("Arguments required: path/to/dataset path/to/haarcasecades_frontalface")
     sys.exit(0)
-datasetPath = sys.argv[1]
-haarcascadesPath = sys.argv[2]
+else:
+    datasetPath = sys.argv[1]
+    haarcascadesPath = sys.argv[2]
 
 # Face Detection cascade
 face_cascade = cv2.CascadeClassifier(haarcascadesPath)
 # Face recognizer cascade
-recognizer = cv2.face.createLBPHFaceRecognizer()
+recognizer = cv2.face.LBPHFaceRecognizer_create()
 
 # Map images to name
 map = {}
@@ -58,9 +68,8 @@ def get_images_and_labels(path_to_data):
             map[label] = name
             studentsLate.add(name)
             totalFaces += 1
-            
             cv2.imshow(name + str(label), img[y:y+h, x:x+w])
-            cv2.waitKey(1)
+            cv2.waitKey(10)
             cv2.destroyAllWindows()
         else:
             print ("Failed to find face at ", image_path)
@@ -79,9 +88,14 @@ if __name__ == '__main__':
     # train recognizer from dataset
     recognizer.train(images, np.array(labels))
     print ("Successfully trained!")
-   
+
     # open camera
     cap = cv2.VideoCapture(0)
+    # resize camera resolution
+    w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     
     # start checking attendance
     #
@@ -100,18 +114,19 @@ if __name__ == '__main__':
                 if h > 100 and w > 100:
                     roi_gray = gray[y:y+h, x:x+w]
                     label_predicted = recognizer.predict(roi_gray)
-                    name = map.get(label_predicted)
+                    name = map.get(label_predicted[0])
                     print(name, "marked present!")
     
                     studentsLate.discard(name) # marked present
                     
-                    cv2.imshow(map.get(label_predicted), roi_gray)
+                    cv2.imshow(map.get(label_predicted[0]), roi_gray)
                     cv2.waitKey(4000)
         
         cv2.imshow("Image", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
+print ("-----------------------LATE PEOPLE-------------------------------")
 # display late students at end of attendance checking
 for name in studentsLate:
     print ("{} is late!".format(name))

@@ -3,16 +3,31 @@ import cv2
 import os
 import sys
 
-if len(sys.argv) != 3:
-    print("Arguments required: -pata/to/save/images -path/to/haarcascades_frontface")
+# My paths
+# /Users/eric/Dropbox/AttendanceCheck/DataSet/
+# /Users/eric/opencv/data/haarcascades/haarcascade_frontalface_default.xml
+
+if len(sys.argv) == 1:
+    print ("Using default paths...")
+    datasetPath = "/Users/eric/Dropbox/AttendanceCheck/DataSet/"
+    haarcascadesPath = "/Users/eric/opencv/data/haarcascades/haarcascade_frontalface_default.xml"
+elif len(sys.argv) != 3:
+    print ("Arguments required: path/to/dataset path/to/haarcasecades_frontalface")
     sys.exit(0)
-datasetPath = sys.argv[1]
-haarcascadesPath = sys.argv[2]
+else:
+    datasetPath = sys.argv[1]
+    haarcascadesPath = sys.argv[2]
 
 # Train face detection software
 face_cascade = cv2.CascadeClassifier(haarcascadesPath)
 # start camera
 cap = cv2.VideoCapture(0)
+# resize camera resolution
+w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
 # image specs
 saveDir = datasetPath
 ext = ".png"
